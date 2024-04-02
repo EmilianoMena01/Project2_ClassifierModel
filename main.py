@@ -161,25 +161,25 @@ poor_mix["Credit_Mix"]=pd.Series(["Bad"]*len(poor_mix), index=poor_mix.index)
 df4=pd.concat([good_mix, standard_mix,underscore_mix,poor_mix])
 df4=pd.DataFrame(df4)
 
-## Punctuation
-model_variables = ['Delay_from_due_date','Num_of_Delayed_Payment', # Payment history 35%
-                   'Outstanding_Debt', # Amounts owed 30%
-                   'Credit_History_Age', # Lengh of credit history 10%
-                   'Credit_Mix', # Credit mix 15%
-                   'Num_Credit_Inquiries'] # New credit 10%
-scores = [[200,150,100,75,50,25],[150,120,90,60,30],[300,275,250,150,75,50],[10,30,50,70,85,100],
-          [150,75,25],[100,85,60,45,30]]
-ranges = [[3,5,15,30,60],[0,7,13,19],[500,1000,1500,2000,2500],[24,48,72,96,120],['Good','Standard'],
-          [3,6,10,20]]
-conditions = [0,0,0,0,1,0]
-model_data = [df4[v].values for v in model_variables]
-variables_punctuation = [f.punctuation(s,r,m,c) for s,r,m,c in zip(scores,ranges,model_data,conditions)]
-model_punctuation = f.final_punctuation(variables_punctuation)
-model_score = [f.score(600,800,x) for x in model_punctuation]
-results = f.df_results(df4, model_punctuation, model_score)
-accuracy = f.accuracy(model_score, df4)
+replacement = {"Credit_Mix": {"Good": 0, "Standard": 1, "_": 2, "Bad": 3}}
+replacement2={"Credit_Score": {"Good": 0, "Standard": 1, "Poor": 2}}
+df4.replace(replacement2, inplace=True)
+df4.replace(replacement, inplace=True)  
 
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
 #Train data
 X = df4.drop(columns = ["Credit_Score","Customer_ID"],axis = 1)
 y = df4["Credit_Score"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+replacement_2 = {"Credit_Mix": {"Good": 0, "Standard": 1, "_": 2, "Bad": 3}}
+replacement2_1={"Credit_Score": {"Good": 0, "Standard": 1, "Poor": 2}}
+df3.replace(replacement_2, inplace=True)
+df3.replace(replacement2_1, inplace=True)
+X_2=df3.drop(columns = ["Credit_Score","Customer_ID","Name"],axis = 1)
+y_2=df3["Credit_Score"]
+X_train_2, X_test_2, y_train_2, y_test_2 = train_test_split(X_2, y_2, test_size=0.2, random_state=42)
+
+
