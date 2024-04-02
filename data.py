@@ -5,7 +5,7 @@
 # -- repository: https://github.com/EmilianoMena01/Project2_ClassifierModel                            -- #
 # -- ------------------------------------------------------------------------------------------------- -- #
 
-# Libraries
+# Libraries and dependencies
 import pandas as pd
 
 # Load the train and test dataframes
