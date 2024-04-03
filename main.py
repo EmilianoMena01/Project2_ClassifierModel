@@ -52,10 +52,10 @@ x_validation = ct.fit_transform(x_validation)
 x_test = ct.transform(x_test)
 
 # Stacking (Decision Tree, Random Forest and Gradient Boosting)
-estimators = [('tree',DecisionTreeClassifier()), ('rf',RandomForestClassifier(criterion='entropy'))]
+estimators = [('GB',GradientBoostingClassifier(learning_rate=0.1, n_estimators=100, criterion='squared_error')),
+              ('rf',RandomForestClassifier(criterion='entropy'))]
 clf1 = StackingClassifier(estimators=estimators, 
-                         final_estimator=GradientBoostingClassifier(learning_rate=0.1, n_estimators=100, 
-                                                                    criterion='squared_error'))
+                         final_estimator=DecisionTreeClassifier())
 clf1.fit(x_train, y_train)
 y_pred1 = clf1.predict(x_validation)
 accuracy1 = accuracy_score(y_validation, y_pred1)

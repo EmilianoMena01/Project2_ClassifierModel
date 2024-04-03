@@ -143,7 +143,7 @@ def data_cleaning(data : pd.DataFrame, drop_variables : list, age_variable : str
         df[credit_score] = [credit_mix_numerical(x) for x in df[credit_score]]
     except:
         pass
-    for var in numeric_variables: # Convert string numbers to float numbers
+    for var in numeric_variables:
         df[var] = [only_numbers(x) for x in df[var]]
     for var in abs_variables:
         df[var] = df[var].abs()     

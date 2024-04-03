@@ -6,12 +6,30 @@
 # -- ------------------------------------------------------------------------------------------------- -- #
 
 # Libraries and dependencies
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn import metrics
+import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Confusion matrix graph
-def confusion_matrix(y, y_pred, labels, title):
-    cm = confusion_matrix(y, y_pred, labels=labels, title=title)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
-    disp.plot()
+# Confusion matrix
+def heatmap(original : list, model : list, labels : list):
+    '''
+    Create a violin plot to see outliers on the data
+
+    Parameters
+    ----------
+        original : list
+            The original data
+        model : list
+            The predicted data
+        labels : list
+            The different categories in which they were predicted the data
+        
+    Returns
+    -------
+    plt
+        A heatmap plot
+    '''
+    confusion_matrix = metrics.confusion_matrix(original, model)
+    sns.heatmap(confusion_matrix, annot=True, fmt='g', xticklabels=labels, yticklabels=labels).set(
+        title='Confusion Matrix',xlabel='Original',ylabel='Model')
     plt.show()
