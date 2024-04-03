@@ -36,31 +36,6 @@ def analyse_data(data : pd.DataFrame):
     }).set_index('Variable_name')
     return df
 
-def fill_info_same_customer(data: pd.DataFrame , id_var: str , fill_var: str):
-    '''
-    The function fill the null values and replace the modified values with the information of the same
-    person
-    
-    Parameters
-    ----------
-        data : pd.DataFrame
-            The dataset that wants to be filled
-        id_var: str
-            Variable that identifies the person
-        fill_var: str
-            Variable that will be filled or replaced
-    
-    Returns
-    -------
-    list
-        A list with all the values present
-    '''
-    k = list(data[id_var])
-    v = list(data[fill_var].ffill())
-    c = {x:y for x,y in zip(k,v)}
-    result = [c.get(x,0) for x in k]
-    return result
-
 def fill_ceros(data: pd.DataFrame , var: str):
     '''
     The function fills the variables null values with 0
@@ -78,6 +53,30 @@ def fill_ceros(data: pd.DataFrame , var: str):
     '''
     result = data[var].fillna(0)
     return result
+
+def numeric_age(data: pd.DataFrame , var: str):
+    '''
+    The function converts the age from a format of NN Years to NN Months to numeric months. It receives the
+    dataset and the variable that has the age
+    
+    Parameters
+    ----------
+        data : pd.DataFrame
+            The dataset that contains the variable
+        var: str
+            Variable of the age that will be converted to numeric
+    
+    Returns
+    -------
+    list
+        A list with all the ages in numeric (int) type
+    '''
+    result = [int(xi[0])*12 + int(xi[3]) for xi in [x.split() for x in data[var]]]
+    return result
+
+credit_mix_numerical =  lambda x: 0 if x == 'Bad' else 2 if x == 'Good' else 1
+
+credit_score_numerical =  lambda x: 0 if x == 'Poor' else 2 if x == 'Good' else 1
 
 def only_numbers(var: str):
     '''
@@ -101,87 +100,53 @@ def only_numbers(var: str):
     result = [float(0) if var=='' or var=='.' or var=='-' or var=='-.' else float(var)][0]
     return result
 
-def numeric_age(data: pd.DataFrame , var: str):
+def data_cleaning(data : pd.DataFrame, drop_variables : list, age_variable : str, credit_mix : str, 
+                  credit_score : str, cero_variables : list, numeric_variables : list, abs_variables : list,
+                  null_variables : str):
     '''
-    The function converts the age from a format of NN Years to NN Months to numeric months. It receives the
-    dataset and the variable that has the age
-    
-    Parameters
-    ----------
-        data : pd.DataFrame
-            The dataset that contains the variable
-        var: str
-            Variable of the age that will be converted to numeric
-    
-    Returns
-    -------
-    list
-        A list with all the ages in numeric (int) type
-    '''
-    result = [int(xi[0])*12 + int(xi[3]) for xi in [x.split() for x in data[var]]]
-    return result
-
-def outliers_replace(data : pd.DataFrame, var : str, num_std : int = 1):
-   '''
-   This function detects and replaces the outliers with the previous value
+    This function cleans the model credit score datasets
 
     Parameters
     ----------
         data : pd.DataFrame
-            The dataset that contains the variable
-        var: str
-            Variable that has outliers
-        num_std: int
-            Number of standard desviations that will be considered to count as a outlier. By default takes
-            1 standard desviation
-    
-    Returns
-    -------
-    list
-        A list with the original values and the replaced outliers
-   '''
-   mean = data[var].mean()
-   std = data[var].std()
-   low = mean - (num_std * std)
-   high = mean + (num_std * std)
-   outliers = data[(data[var]<low) | (data[var] > high)][var]
-   data[var] = data[var].replace(outliers.values,np.nan)
-   result = data[var].ffill()
-   return result
-
-def data_cleaning(data : pd.DataFrame, drop_variables : list, customer_variables : list, cero_variables : list, 
-                  numeric_variables : list, outliers_variables : list):
-   '''
-   This function cleans the model credit score datasets
-
-    Parameters
-    ----------
-        data : pd.DataFrame
-            The dataset that contains the variable
+            The dataset that will be cleaned
         drop_variables: list
             List with the variables that will be droped from the dataset
-        customer_variables: list
-            List with the variables that will use the fill_info_same_customer function
+        age_variable: str
+            The variable that contains the age on 'NN Years and NN Months'
+        credit_mix_variables: str
+            The variable that has string values on credit_mix (Bad, Standard and Good) 
+        credit_score_variables: str
+            The variable that has string values on credit_score (Poor, Standard and Good)
         cero_variables: list
-            List with the variables that will use the fill_ceros
+            List with the variables that have null values that will be filled with 0
         numeric_variables: list
-            List with the variables that will use the only_numbers
-        outliers_variables: list
-            List with the variables that will use the outliers_replace
+            List with the variables that has string values that are numbers
+        abs_variables: list
+            List with the variables that have negative values they are really positive
+        null_variables : list
+            List of the variables that have null values that will be replaced with the info of the last record
     
     Returns
     -------
     pd.DataFrame
         A dataframe with the data cleaned
-   '''
-   df = data.drop(columns = drop_variables, axis = 1) # Drop the variables that won´t be used
-   for var in customer_variables: # Fill the variables with the info of the same Customer
-      df[var] = fill_info_same_customer(data = df, id_var = 'Customer_ID', fill_var = var)
-   for var in cero_variables: # Fill the variables with 0
-      df[var] = fill_ceros(data = df, var = var)
-   for var in numeric_variables: # Convert string numbers to float numbers
-      df[var] = [only_numbers(x) for x in df[var]]
-   df['Credit_History_Age'] = numeric_age(data = df, var = 'Credit_History_Age')# Get the number of months
-   for var in outliers_variables: # Replace the outliers
-      df[var] = outliers_replace(df,var,1)
-   return df
+    '''
+    df = data.drop(columns = drop_variables, axis = 1)
+    for var in cero_variables:
+        df[var] = fill_ceros(data = df, var = var)
+    for var in null_variables:
+        df[var] = df[var].bfill()
+    df[age_variable] = numeric_age(df,age_variable)
+    df[credit_mix] = [credit_mix_numerical(x) for x in df[credit_mix]]
+    try:
+        df[credit_score] = [credit_mix_numerical(x) for x in df[credit_score]]
+    except:
+        pass
+    for var in numeric_variables: # Convert string numbers to float numbers
+        df[var] = [only_numbers(x) for x in df[var]]
+    for var in abs_variables:
+        df[var] = df[var].abs()     
+    return df
+
+score =  lambda x: 'Poor' if x == 0 else 'Good' if x == 2 else 'Standard'
