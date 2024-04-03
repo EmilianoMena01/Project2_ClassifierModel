@@ -5,7 +5,7 @@
 # -- repository: https://github.com/EmilianoMena01/Project2_ClassifierModel                            -- #
 # -- ------------------------------------------------------------------------------------------------- -- #
 
-## Libraries and dependencies
+# Libraries and dependencies
 import pandas as pd
 import numpy as np
 import string
@@ -149,131 +149,39 @@ def outliers_replace(data : pd.DataFrame, var : str, num_std : int = 1):
    result = data[var].ffill()
    return result
 
-## Punctuation Model
-def punctuation(scores: list, ranges: list, values: list, condition: int = 0):
-    '''
-    This function receives the values of the variables selected and gives them a score based on the ranges 
-    entered considering the condition selected.  
+def data_cleaning(data : pd.DataFrame, drop_variables : list, customer_variables : list, cero_variables : list, 
+                  numeric_variables : list, outliers_variables : list):
+   '''
+   This function cleans the model credit score datasets
 
-    Parameters
-    ----------
-        scores : list
-            All the scores that every value can get
-        ranges: list
-            The ranges on which every score will be assigned
-        values: list
-            The values of every variable selected
-        conditions: int
-            A flag used to select the type of if statement to evaluate if is in the range or not, 0 is '<=', 
-            1 is '==' and 2 is '>='
-    
-    Returns
-    -------
-    list
-        A list with all punctuations of a variable
-    '''
-    if condition == 0:
-        result = [max([z if xi <= y else scores[-1] for z,y in zip(scores[:-1],ranges)]) for xi in values]
-    elif condition == 1:
-        result = [max([z if xi == y else scores[-1] for z,y in zip(scores[:-1],ranges)]) for xi in values]
-    elif condition == 2:
-        result = [max([z if xi >= y else scores[-1] for z,y in zip(scores[:-1],ranges)]) for xi in values]
-    else:
-        raise Warning("The condition options are 0 for <=, 1 for ==, 3 for >=!")
-    return result
-
-def final_punctuation(punctuations: list):
-    '''
-    This function receives the punctuations of every variable and gets back the final punctuation (sum all
-    of them)
-
-    Parameters
-    ----------
-        punctuations : list
-            List of lists that contain all the variables punctuation
-    
-    Returns
-    -------
-    list
-        A list with the final punctuation of every person
-    '''
-    result = [sum(x) for x in zip(*punctuations)]
-    return result
-
-def score(range1 : int, range2 : int, punctuation : int):
-    '''
-    This function assign the final score to every punctuation
-    
-    Parameters
-    ----------
-        range1 : int
-            The first range is a number that will be compared with the punctuation, if the punctuation is 
-            under the range number the score will be Poor, if the punctuation is above the range number the
-            score will be Standard
-        range2 : int
-            The second range is a number that will be compared with the punctuation, if the punctuation is 
-            under the range number the score will be Standard, if the punctuation is above the range number 
-            the score will be Good
-        punctuation : int
-            The punctuation that a person got on the model
-    
-    Returns
-    -------
-    str
-        The score of the given punctuation
-    '''
-    if punctuation < 600:
-        result = 'Poor' 
-    elif punctuation < 800:
-        result = 'Standard' 
-    else:
-        result = 'Good'
-    return result
-
-def df_results(data: pd.DataFrame, punctuation: list, scores: list):
-    '''
-    This function returns a dataset that has the original scores, the model scores, the model punctuation
-    and some info of every person to know whose score it is
-    
     Parameters
     ----------
         data : pd.DataFrame
-            Dataset with the all the information
-        punctuation : list
-            The model punctuation
-        scores : list
-            The model scores
+            The dataset that contains the variable
+        drop_variables: list
+            List with the variables that will be droped from the dataset
+        customer_variables: list
+            List with the variables that will use the fill_info_same_customer function
+        cero_variables: list
+            List with the variables that will use the fill_ceros
+        numeric_variables: list
+            List with the variables that will use the only_numbers
+        outliers_variables: list
+            List with the variables that will use the outliers_replace
     
     Returns
     -------
     pd.DataFrame
-        A dataset that includes the Customer_ID, Name, Model Punctuation, Model Score and Original Score
-    '''
-    result =  pd.DataFrame({
-        'Customer_ID': data['Customer_ID'],
-        #'Name': data['Name'],
-        'Model_Punctuation': punctuation,
-        'Model_Score': scores,
-        'Original_Score': data['Credit_Score']
-        })
-    return result
-
-def accuracy(scores: list, data: pd.DataFrame):
-    '''
-    This function shows the model accuracy
-    
-    Parameters
-    ----------
-        scores : list
-            List of the model scores
-        data : pd.DataFrame
-            Dataset with the all the information
-    
-    Returns
-    -------
-    float
-        The accuracy expressed as a percentage (multiplied by 100)
-    '''
-    result = sum([1 if x==y else 0 for x,y in zip(scores,data['Credit_Score'])])/len(data)
-    return result
-
+        A dataframe with the data cleaned
+   '''
+   df = data.drop(columns = drop_variables, axis = 1) # Drop the variables that won´t be used
+   for var in customer_variables: # Fill the variables with the info of the same Customer
+      df[var] = fill_info_same_customer(data = df, id_var = 'Customer_ID', fill_var = var)
+   for var in cero_variables: # Fill the variables with 0
+      df[var] = fill_ceros(data = df, var = var)
+   for var in numeric_variables: # Convert string numbers to float numbers
+      df[var] = [only_numbers(x) for x in df[var]]
+   df['Credit_History_Age'] = numeric_age(data = df, var = 'Credit_History_Age')# Get the number of months
+   for var in outliers_variables: # Replace the outliers
+      df[var] = outliers_replace(df,var,1)
+   return df

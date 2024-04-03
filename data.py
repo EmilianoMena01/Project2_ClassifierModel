@@ -5,10 +5,9 @@
 # -- repository: https://github.com/EmilianoMena01/Project2_ClassifierModel                            -- #
 # -- ------------------------------------------------------------------------------------------------- -- #
 
-# Importing libraries
+# Libraries and dependencies
 import pandas as pd
 
-## Load the train database
-df = pd.read_csv('files/train-1.csv',low_memory=False)
-
-
+# Load the train and test dataframes
+train = pd.read_csv('files/train-1.csv',low_memory=False)
+test = pd.read_csv('files/test.csv',low_memory=False)
