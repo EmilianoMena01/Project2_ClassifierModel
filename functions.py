@@ -140,7 +140,7 @@ def data_cleaning(data : pd.DataFrame, drop_variables : list, age_variable : str
     df[age_variable] = numeric_age(df,age_variable)
     df[credit_mix] = [credit_mix_numerical(x) for x in df[credit_mix]]
     try:
-        df[credit_score] = [credit_mix_numerical(x) for x in df[credit_score]]
+        df[credit_score] = [credit_score_numerical(x) for x in df[credit_score]]
     except:
         pass
     for var in numeric_variables:
